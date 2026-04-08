@@ -3,6 +3,7 @@ from typing import Iterator
 from rich.console import Console
 from rich.live import Live
 from rich.markdown import Markdown
+from rich.table import Table
 from rich.text import Text
 
 from spamless.ui.theme import (
@@ -11,6 +12,11 @@ from spamless.ui.theme import (
     MUTED_COLOR,
     SUCCESS_STYLE,
 )
+
+
+def _header(console: Console, title: str, color: str = "cyan") -> None:
+    """Print a compact section header with a left-accent bar instead of a full rule."""
+    console.print(f"  [bold {color}]▎ {title}[/bold {color}]", highlight=False)
 
 _LOGO = r"""
   ███████╗██████╗  █████╗ ███╗   ███╗██╗     ███████╗███████╗███████╗
@@ -23,21 +29,26 @@ _LOGO = r"""
 
 
 def show_plan(context: str, clarifications: str, filename: str, console: Console) -> None:
-    """Render context and clarifications as plain sections."""
-    console.print()
-    console.rule(f"[bold cyan]Context — {filename}[/bold cyan]", style="cyan")
-    console.print()
-    if context.strip():
-        console.print(Markdown(context))
-    else:
-        console.print("  Nothing confirmed yet.", style="dim")
+    """Render context and clarifications side by side."""
     console.print()
 
-    if clarifications.strip():
-        console.rule("[bold yellow]Clarifications[/bold yellow]", style="yellow")
-        console.print()
-        console.print(Markdown(clarifications))
-        console.print()
+    ctx_content = Markdown(context) if context.strip() else Text("Nothing confirmed yet.", style="dim")
+    clar_content = Markdown(clarifications) if clarifications.strip() else Text("", style="dim")
+
+    grid = Table.grid(padding=(0, 3), expand=True)
+    grid.add_column(ratio=1)
+    grid.add_column(ratio=1)
+
+    # headers row
+    grid.add_row(
+        Text(f"▎ Context — {filename}", style="bold cyan"),
+        Text("▎ Clarifications", style="bold yellow") if clarifications.strip() else Text(""),
+    )
+    # content row
+    grid.add_row(ctx_content, clar_content)
+
+    console.print(grid)
+    console.print()
 
 
 def show_full_state(
@@ -48,28 +59,37 @@ def show_full_state(
     filename: str,
     console: Console,
 ) -> None:
-    """After each turn: show question, answer, context, clarifications."""
+    """After each turn: show question, answer, then context + clarifications side by side."""
+    qa_grid = Table.grid(padding=(0, 3), expand=True)
+    qa_grid.add_column(ratio=1)
+    qa_grid.add_column(ratio=1)
+    qa_grid.add_row(
+        Text("▎ Question", style="bold white"),
+        Text("▎ Answer", style="bold cyan"),
+    )
+    qa_grid.add_row(
+        Text(user_msg, style="white"),
+        Markdown(answer),
+    )
     console.print()
-    console.rule("[bold white]Question[/bold white]", style="dim")
+    console.print(qa_grid)
     console.print()
-    console.print(f"  {user_msg}", style="white")
+
+    ctx_content = Markdown(context) if context.strip() else Text("Nothing confirmed yet.", style="dim")
+    clar_content = Markdown(clarifications) if clarifications.strip() else Text("", style="dim")
+
+    grid = Table.grid(padding=(0, 3), expand=True)
+    grid.add_column(ratio=1)
+    grid.add_column(ratio=1)
+
+    grid.add_row(
+        Text(f"▎ Context — {filename}", style="bold cyan"),
+        Text("▎ Clarifications", style="bold yellow") if clarifications.strip() else Text(""),
+    )
+    grid.add_row(ctx_content, clar_content)
+
+    console.print(grid)
     console.print()
-    console.rule("[bold cyan]Answer[/bold cyan]", style="cyan")
-    console.print()
-    console.print(Markdown(answer))
-    console.print()
-    console.rule(f"[bold cyan]Context — {filename}[/bold cyan]", style="cyan")
-    console.print()
-    if context.strip():
-        console.print(Markdown(context))
-    else:
-        console.print("  Nothing confirmed yet.", style="dim")
-    console.print()
-    if clarifications.strip():
-        console.rule("[bold yellow]Clarifications[/bold yellow]", style="yellow")
-        console.print()
-        console.print(Markdown(clarifications))
-        console.print()
 
 
 def show_banner(console: Console) -> None:
@@ -79,7 +99,7 @@ def show_banner(console: Console) -> None:
 
 def show_result(answer: str, choice: str, console: Console) -> None:
     console.print()
-    console.rule("[bold green]Result[/bold green]", style="green")
+    _header(console, "Result", "green")
     console.print()
     console.print("  Topic:  ", style=MUTED_COLOR, end="")
     console.print(answer, style=SECONDARY_COLOR + " bold")
@@ -96,7 +116,7 @@ def show_ai_response(
     console: Console,
 ) -> None:
     console.print()
-    console.rule("[bold magenta]Request[/bold magenta]", style="magenta")
+    _header(console, "Request", "magenta")
     console.print()
     console.print("  Model:  ", style=MUTED_COLOR, end="")
     console.print(model, style=SECONDARY_COLOR + " bold")
@@ -105,7 +125,7 @@ def show_ai_response(
     console.print("  Input:  ", style=MUTED_COLOR, end="")
     console.print(prompt, style="white")
     console.print()
-    console.rule("[bold cyan]Response[/bold cyan]", style="cyan")
+    _header(console, "Response", "cyan")
     console.print()
 
     full_text = ""
