@@ -1,4 +1,7 @@
+from typing import Iterator
+
 from rich.console import Console
+from rich.live import Live
 from rich.panel import Panel
 from rich.text import Text
 
@@ -42,4 +45,46 @@ def show_result(answer: str, choice: str, console: Console) -> None:
             expand=False,
         )
     )
+    console.print()
+
+
+def show_ai_response(
+    prompt: str,
+    key_index: int,
+    model: str,
+    chunks: Iterator[str],
+    console: Console,
+) -> None:
+    request_content = Text()
+    request_content.append("  Model:  ", style=MUTED_COLOR)
+    request_content.append(f"{model}\n", style=SECONDARY_COLOR + " bold")
+    request_content.append("  Key:    ", style=MUTED_COLOR)
+    request_content.append(f"#{key_index}\n", style=SUCCESS_STYLE)
+    request_content.append("  Input:  ", style=MUTED_COLOR)
+    request_content.append(prompt, style="white")
+
+    console.print()
+    console.print(
+        Panel(
+            request_content,
+            title="[bold magenta] Request [/bold magenta]",
+            border_style=BRAND_COLOR,
+            padding=(1, 2),
+            expand=False,
+        )
+    )
+    console.print()
+
+    full_text = ""
+    with Live(console=console, refresh_per_second=15) as live:
+        for chunk in chunks:
+            full_text += chunk
+            live.update(
+                Panel(
+                    full_text,
+                    title="[bold cyan] Response [/bold cyan]",
+                    border_style=SECONDARY_COLOR,
+                    padding=(1, 2),
+                )
+            )
     console.print()

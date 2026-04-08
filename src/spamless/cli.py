@@ -1,8 +1,9 @@
 import os
 from rich.console import Console
 
-from spamless.ui.banner import show_banner, show_result
-from spamless.prompts.questions import ask_question, show_select
+from spamless.api.openrouter import stream_completion
+from spamless.ui.banner import show_banner, show_ai_response
+from spamless.prompts.questions import ask_question
 
 console = Console()
 
@@ -15,10 +16,7 @@ def main() -> None:
         if not answer:
             console.print("\n[dim]Nothing to filter. Goodbye.[/dim]\n")
             return
-        choice = show_select(answer)
-        if not choice:
-            console.print("\n[dim]No action selected. Goodbye.[/dim]\n")
-            return
-        show_result(answer, choice, console)
+        key_index, model, chunks = stream_completion(answer)
+        show_ai_response(answer, key_index, model, chunks, console)
     except KeyboardInterrupt:
         console.print("\n\n[bold magenta]  Goodbye from spamless.[/bold magenta]\n")

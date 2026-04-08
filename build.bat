@@ -31,6 +31,10 @@ pyinstaller ^
   --specpath . ^
   src\spamless\__main__.py
 
+:: Copy .env alongside the exe so it can find the API keys at runtime
+echo Copying .env to dist\...
+copy .env dist\.env >nul
+
 echo.
 echo Done! Executable is at: dist\spamless.exe
 endlocal

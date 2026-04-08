@@ -8,6 +8,12 @@ version = "0.1.0"
 description = "in the ai world, this is the real ai."
 requires-python = ">=3.10"
 license = { text = "MIT" }
+dependencies = [
+    "rich>=14.0.0,<15",
+    "questionary>=2.1.0,<3",
+    "httpx>=0.28.0,<1",
+    "python-dotenv>=1.0.0,<2",
+]
 
 [project.scripts]
 spamless = "spamless.cli:main"
