@@ -1,0 +1,16 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "spamless"
+version = "0.1.0"
+description = "in the ai world, this is the real ai."
+requires-python = ">=3.10"
+license = { text = "MIT" }
+
+[project.scripts]
+spamless = "spamless.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/spamless"]
