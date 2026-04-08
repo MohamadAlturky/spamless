@@ -3,7 +3,6 @@ from typing import Iterator
 from rich.console import Console
 from rich.live import Live
 from rich.markdown import Markdown
-from rich.panel import Panel
 from rich.text import Text
 
 from spamless.ui.theme import (
@@ -24,30 +23,53 @@ _LOGO = r"""
 
 
 def show_plan(context: str, clarifications: str, filename: str, console: Console) -> None:
-    """Render context and clarifications as two distinct panels."""
+    """Render context and clarifications as plain sections."""
     console.print()
-
-    ctx_body = Markdown(context) if context.strip() else Text("Nothing confirmed yet.", style="dim")
-    console.print(
-        Panel(
-            ctx_body,
-            title=f"[bold cyan] Context — {filename} [/bold cyan]",
-            border_style=SECONDARY_COLOR,
-            padding=(1, 2),
-        )
-    )
+    console.rule(f"[bold cyan]Context — {filename}[/bold cyan]", style="cyan")
+    console.print()
+    if context.strip():
+        console.print(Markdown(context))
+    else:
+        console.print("  Nothing confirmed yet.", style="dim")
+    console.print()
 
     if clarifications.strip():
-        console.print(
-            Panel(
-                Markdown(clarifications),
-                title="[bold yellow] Clarifications Needed [/bold yellow]",
-                border_style="yellow",
-                padding=(1, 2),
-            )
-        )
+        console.rule("[bold yellow]Clarifications[/bold yellow]", style="yellow")
+        console.print()
+        console.print(Markdown(clarifications))
+        console.print()
 
+
+def show_full_state(
+    user_msg: str,
+    answer: str,
+    context: str,
+    clarifications: str,
+    filename: str,
+    console: Console,
+) -> None:
+    """After each turn: show question, answer, context, clarifications."""
     console.print()
+    console.rule("[bold white]Question[/bold white]", style="dim")
+    console.print()
+    console.print(f"  {user_msg}", style="white")
+    console.print()
+    console.rule("[bold cyan]Answer[/bold cyan]", style="cyan")
+    console.print()
+    console.print(Markdown(answer))
+    console.print()
+    console.rule(f"[bold cyan]Context — {filename}[/bold cyan]", style="cyan")
+    console.print()
+    if context.strip():
+        console.print(Markdown(context))
+    else:
+        console.print("  Nothing confirmed yet.", style="dim")
+    console.print()
+    if clarifications.strip():
+        console.rule("[bold yellow]Clarifications[/bold yellow]", style="yellow")
+        console.print()
+        console.print(Markdown(clarifications))
+        console.print()
 
 
 def show_banner(console: Console) -> None:
@@ -57,22 +79,12 @@ def show_banner(console: Console) -> None:
 
 def show_result(answer: str, choice: str, console: Console) -> None:
     console.print()
-
-    content = Text()
-    content.append("  Topic:   ", style=MUTED_COLOR)
-    content.append(f"{answer}\n", style=SECONDARY_COLOR + " bold")
-    content.append("  Action:  ", style=MUTED_COLOR)
-    content.append(choice, style=SUCCESS_STYLE)
-
-    console.print(
-        Panel(
-            content,
-            title="[bold green] Result [/bold green]",
-            border_style="green",
-            padding=(1, 2),
-            expand=False,
-        )
-    )
+    console.rule("[bold green]Result[/bold green]", style="green")
+    console.print()
+    console.print("  Topic:  ", style=MUTED_COLOR, end="")
+    console.print(answer, style=SECONDARY_COLOR + " bold")
+    console.print("  Action: ", style=MUTED_COLOR, end="")
+    console.print(choice, style=SUCCESS_STYLE)
     console.print()
 
 
@@ -83,36 +95,22 @@ def show_ai_response(
     chunks: Iterator[str],
     console: Console,
 ) -> None:
-    request_content = Text()
-    request_content.append("  Model:  ", style=MUTED_COLOR)
-    request_content.append(f"{model}\n", style=SECONDARY_COLOR + " bold")
-    request_content.append("  Key:    ", style=MUTED_COLOR)
-    request_content.append(f"#{key_index}\n", style=SUCCESS_STYLE)
-    request_content.append("  Input:  ", style=MUTED_COLOR)
-    request_content.append(prompt, style="white")
-
     console.print()
-    console.print(
-        Panel(
-            request_content,
-            title="[bold magenta] Request [/bold magenta]",
-            border_style=BRAND_COLOR,
-            padding=(1, 2),
-            expand=False,
-        )
-    )
+    console.rule("[bold magenta]Request[/bold magenta]", style="magenta")
+    console.print()
+    console.print("  Model:  ", style=MUTED_COLOR, end="")
+    console.print(model, style=SECONDARY_COLOR + " bold")
+    console.print("  Key:    ", style=MUTED_COLOR, end="")
+    console.print(f"#{key_index}", style=SUCCESS_STYLE)
+    console.print("  Input:  ", style=MUTED_COLOR, end="")
+    console.print(prompt, style="white")
+    console.print()
+    console.rule("[bold cyan]Response[/bold cyan]", style="cyan")
     console.print()
 
     full_text = ""
     with Live(console=console, refresh_per_second=15) as live:
         for chunk in chunks:
             full_text += chunk
-            live.update(
-                Panel(
-                    full_text,
-                    title="[bold cyan] Response [/bold cyan]",
-                    border_style=SECONDARY_COLOR,
-                    padding=(1, 2),
-                )
-            )
+            live.update(Text(full_text))
     console.print()

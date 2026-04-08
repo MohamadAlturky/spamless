@@ -1,6 +1,6 @@
 from rich.console import Console
 from rich.live import Live
-from rich.panel import Panel
+from rich.text import Text
 
 from spamless.api.openrouter import stream_completion_with_system
 from spamless.ui.theme import SECONDARY_COLOR
@@ -94,11 +94,11 @@ def stream_plan_response(
     answer_open = "<answer>"
     answer_close = "</answer>"
 
-    with Live(
-        Panel("", title="[bold cyan] AI [/bold cyan]", border_style=SECONDARY_COLOR, padding=(1, 2)),
-        console=console,
-        refresh_per_second=15,
-    ) as live:
+    console.print()
+    console.rule("[bold cyan]Answer[/bold cyan]", style=SECONDARY_COLOR)
+    console.print()
+
+    with Live(Text(""), console=console, refresh_per_second=15) as live:
         for chunk in chunks:
             full_response += chunk
 
@@ -113,12 +113,7 @@ def stream_plan_response(
                         answer_ended = True
                     else:
                         live_text = after_open.strip()
-                    live.update(Panel(
-                        live_text,
-                        title="[bold cyan] AI [/bold cyan]",
-                        border_style=SECONDARY_COLOR,
-                        padding=(1, 2),
-                    ))
+                    live.update(Text(live_text))
             elif not answer_ended:
                 idx = full_response.find(answer_open)
                 after_open = full_response[idx + len(answer_open):]
@@ -128,12 +123,7 @@ def stream_plan_response(
                     answer_ended = True
                 else:
                     live_text = after_open.strip()
-                live.update(Panel(
-                    live_text,
-                    title="[bold cyan] AI [/bold cyan]",
-                    border_style=SECONDARY_COLOR,
-                    padding=(1, 2),
-                ))
+                live.update(Text(live_text))
 
     console.print()
 

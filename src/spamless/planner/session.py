@@ -1,16 +1,23 @@
+import os
+
 from rich.console import Console
 
 from spamless.planner.ai import stream_plan_response
 from spamless.planner.diff import show_diff
 from spamless.planner.io import load_plan, save_plan
 from spamless.planner.prompts import ask_accept_diff, ask_plan_name, ask_user_message
-from spamless.ui.banner import show_plan
+from spamless.ui.banner import show_full_state, show_plan
+
+
+def _clear() -> None:
+    os.system("cls" if os.name == "nt" else "clear")
 
 
 def run_planner_session(console: Console) -> None:
     """Interactive planning loop: load/create plan → converse → diff/accept → save."""
     path = ask_plan_name()
     context, clarifications = load_plan(path)
+    _clear()
     show_plan(context, clarifications, path.name, console)
 
     while True:
@@ -19,6 +26,7 @@ def run_planner_session(console: Console) -> None:
             console.print("\n[dim]Goodbye.[/dim]\n")
             break
 
+        _clear()
         _answer, new_ctx, new_clar = stream_plan_response(
             context, clarifications, user_msg, console
         )
@@ -27,7 +35,6 @@ def run_planner_session(console: Console) -> None:
         clar_changed = new_clar is not None and new_clar.strip() != clarifications.strip()
 
         if ctx_changed or clar_changed:
-            console.print()
             if ctx_changed:
                 show_diff(context, new_ctx, console, label="Context Changes")
             if clar_changed:
@@ -39,6 +46,8 @@ def run_planner_session(console: Console) -> None:
                 if clar_changed:
                     clarifications = new_clar
                 save_plan(path, context, clarifications)
-                show_plan(context, clarifications, path.name, console)
             else:
                 console.print("[dim]Plan unchanged.[/dim]\n")
+
+        _clear()
+        show_full_state(user_msg, _answer, context, clarifications, path.name, console)
