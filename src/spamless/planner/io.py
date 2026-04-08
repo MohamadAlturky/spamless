@@ -1,6 +1,3 @@
-from pathlib import Path
-
-
 def _parse_sections(content: str) -> tuple[str, str]:
     """Split markdown into (context, clarifications) by ## headings."""
     context = ""
@@ -30,17 +27,3 @@ def _build_markdown(context: str, clarifications: str) -> str:
     if clarifications.strip():
         md += f"\n\n## Clarifications\n\n{clarifications.strip()}"
     return md
-
-
-def load_plan(path: Path) -> tuple[str, str]:
-    """Read plan file. Returns (context, clarifications); both empty if file missing."""
-    if not path.exists():
-        return "", ""
-    content = path.read_text(encoding="utf-8")
-    return _parse_sections(content)
-
-
-def save_plan(path: Path, context: str, clarifications: str) -> None:
-    """Write context + clarifications to disk as a structured markdown file."""
-    md = _build_markdown(context, clarifications)
-    path.write_text(md.replace("\r\n", "\n"), encoding="utf-8")

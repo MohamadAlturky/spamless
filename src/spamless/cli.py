@@ -1,9 +1,10 @@
 import os
+
 from rich.console import Console
 
-from spamless.api.openrouter import stream_completion
-from spamless.ui.banner import show_banner, show_ai_response
-from spamless.prompts.questions import ask_mode, ask_question
+from spamless import db
+from spamless.ui.banner import show_banner
+from spamless.ui.plans_page import run_plans_page
 from spamless.planner.session import run_planner_session
 
 console = Console()
@@ -13,17 +14,15 @@ def main() -> None:
     try:
         os.system("cls" if os.name == "nt" else "clear")
         show_banner(console)
+        db.init_db()
 
-        mode = ask_mode()
+        action, plan_id = run_plans_page(console)
 
-        if mode == "plan":
-            run_planner_session(console)
-        else:
-            answer = ask_question()
-            if not answer:
-                console.print("\n[dim]Nothing to filter. Goodbye.[/dim]\n")
-                return
-            key_index, model, chunks = stream_completion(answer)
-            show_ai_response(answer, key_index, model, chunks, console)
+        if action == "quit":
+            console.print("\n[bold magenta]  Goodbye from spamless.[/bold magenta]\n")
+            return
+
+        run_planner_session(console, plan_id)
+
     except KeyboardInterrupt:
         console.print("\n\n[bold magenta]  Goodbye from spamless.[/bold magenta]\n")

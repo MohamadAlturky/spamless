@@ -2,10 +2,11 @@ import os
 
 from rich.console import Console
 
+from spamless import db
 from spamless.planner.ai import stream_plan_response
 from spamless.planner.diff import show_diff
-from spamless.planner.io import load_plan, save_plan
-from spamless.planner.prompts import ask_accept_diff, ask_plan_name, ask_user_message
+from spamless.planner.io import _build_markdown, _parse_sections
+from spamless.planner.prompts import ask_accept_diff, ask_user_message
 from spamless.ui.banner import show_full_state, show_plan
 
 
@@ -13,12 +14,18 @@ def _clear() -> None:
     os.system("cls" if os.name == "nt" else "clear")
 
 
-def run_planner_session(console: Console) -> None:
-    """Interactive planning loop: load/create plan → converse → diff/accept → save."""
-    path = ask_plan_name()
-    context, clarifications = load_plan(path)
+def run_planner_session(console: Console, plan_id: int) -> None:
+    """Interactive planning loop: load plan from DB → converse → diff/accept → save."""
+    plan = db.get_plan(plan_id)
+    if plan is None:
+        console.print("[bold red]Plan not found.[/bold red]")
+        return
+
+    title = plan["title"]
+    context, clarifications = _parse_sections(plan["content"])
+
     _clear()
-    show_plan(context, clarifications, path.name, console)
+    show_plan(context, clarifications, title, console)
 
     while True:
         user_msg = ask_user_message()
@@ -45,9 +52,9 @@ def run_planner_session(console: Console) -> None:
                     context = new_ctx
                 if clar_changed:
                     clarifications = new_clar
-                save_plan(path, context, clarifications)
+                db.save_plan(plan_id, _build_markdown(context, clarifications))
             else:
                 console.print("[dim]Plan unchanged.[/dim]\n")
 
         _clear()
-        show_full_state(user_msg, _answer, context, clarifications, path.name, console)
+        show_full_state(user_msg, _answer, context, clarifications, title, console)
