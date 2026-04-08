@@ -33,6 +33,42 @@ spamless
 
 You'll be prompted to describe what to filter, then choose how to handle it. That's it.
 
+---
+
+## Planner Mode
+
+```bash
+spamless --plan
+```
+
+Launches an interactive AI planning session in the current directory. You name a plan (or select an existing `.md` file), then iterate on it through conversation. The plan file is your persistent memory — it's the only context the AI ever sees.
+
+### How the loop works
+
+1. Enter a plan name (autocompleted from `.md` files in the current folder)
+2. The current plan is displayed in the terminal
+3. You type a message — a question, a request to add/change something, or a direction
+4. The AI replies with a direct answer and, when needed, a fully updated plan
+5. If the plan changed, a color-coded diff is shown (green = added, red = removed)
+6. You accept or reject — acceptance saves to disk, rejection is a no-op
+7. Repeat from step 2
+
+### AI approach
+
+The planner is built around three principles:
+
+**1. The plan is the memory.**
+No conversation history is maintained between turns. Each request sends only two things to the model: the current plan content and your message. This keeps token usage minimal and forces the plan to remain the authoritative source of truth — if it's not in the plan, it doesn't exist.
+
+**2. Structured XML output.**
+The AI always emits a `<answer>` block (its conversational reply) and optionally a `<plan>` block (the full updated plan). This separation means the answer streams live to your terminal while the plan update is parsed after streaming completes. You see the response in real time without blocking on plan parsing.
+
+**3. Full-plan replacement, never partial patches.**
+When the AI updates the plan, it emits the complete document — not a diff or a patch. This eliminates merge logic entirely. The diff you see is computed locally between the on-disk version and the AI's proposed version, so you always know exactly what would change before committing.
+
+**Why no history?**
+Conversation history inflates context costs and creates drift — the AI starts optimizing for the conversation rather than the plan. By resetting context each turn, the plan must stand on its own, which produces cleaner, more self-contained documents. Think of it as forcing good discipline: if the plan needs the chat context to make sense, the plan isn't complete yet.
+
 ## Install
 
 ```bash

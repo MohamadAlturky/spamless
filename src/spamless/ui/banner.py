@@ -2,6 +2,7 @@ from typing import Iterator
 
 from rich.console import Console
 from rich.live import Live
+from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.text import Text
 
@@ -20,6 +21,33 @@ _LOGO = r"""
   ███████║██║     ██║  ██║██║ ╚═╝ ██║███████╗███████╗███████║███████║
   ╚══════╝╚═╝     ╚═╝  ╚═╝╚═╝     ╚═╝╚══════╝╚══════╝╚══════╝╚══════╝
 """
+
+
+def show_plan(context: str, clarifications: str, filename: str, console: Console) -> None:
+    """Render context and clarifications as two distinct panels."""
+    console.print()
+
+    ctx_body = Markdown(context) if context.strip() else Text("Nothing confirmed yet.", style="dim")
+    console.print(
+        Panel(
+            ctx_body,
+            title=f"[bold cyan] Context — {filename} [/bold cyan]",
+            border_style=SECONDARY_COLOR,
+            padding=(1, 2),
+        )
+    )
+
+    if clarifications.strip():
+        console.print(
+            Panel(
+                Markdown(clarifications),
+                title="[bold yellow] Clarifications Needed [/bold yellow]",
+                border_style="yellow",
+                padding=(1, 2),
+            )
+        )
+
+    console.print()
 
 
 def show_banner(console: Console) -> None:

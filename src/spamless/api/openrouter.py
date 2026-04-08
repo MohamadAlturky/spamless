@@ -80,3 +80,38 @@ def stream_completion(prompt: str) -> tuple[int, str, Iterator[str]]:
                         yield delta
 
     return key_index, model, _chunks()
+
+
+def stream_completion_with_system(
+    system_prompt: str,
+    messages: list[dict],
+) -> tuple[int, str, Iterator[str]]:
+    """Return (key_index, model, chunk_iterator) using an explicit system prompt and message list."""
+    key_index, api_key = key_rotator.next()
+    model = os.getenv("MODEL_NAME", "google/gemini-2.0-flash-001")
+
+    def _chunks() -> Iterator[str]:
+        with httpx.Client(timeout=60) as client:
+            with client.stream(
+                "POST",
+                _OPENROUTER_URL,
+                headers={
+                    "Authorization": f"Bearer {api_key}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "model": model,
+                    "messages": [{"role": "system", "content": system_prompt}, *messages],
+                    "stream": True,
+                },
+            ) as resp:
+                resp.raise_for_status()
+                for line in resp.iter_lines():
+                    if not line.startswith("data: ") or line == "data: [DONE]":
+                        continue
+                    data = json.loads(line[6:])
+                    delta = data["choices"][0]["delta"].get("content", "")
+                    if delta:
+                        yield delta
+
+    return key_index, model, _chunks()
