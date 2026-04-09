@@ -9,6 +9,7 @@ from rich.table import Table
 from rich.text import Text
 
 from spamless import db
+from spamless.ui.banner import _header
 from spamless.ui.theme import BRAND_COLOR, QUESTIONARY_STYLE
 
 PAGE_SIZE = 5
@@ -68,7 +69,7 @@ def _render(console: Console, plans: list[dict], selected: int, page: int, total
     total_pages = max(1, (total + PAGE_SIZE - 1) // PAGE_SIZE)
 
     console.print()
-    console.rule(f"[bold magenta]  Plans[/bold magenta]  [dim]page {page}/{total_pages}[/dim]", style="magenta")
+    _header(console, f"Plans  [dim]page {page}/{total_pages}[/dim]", "magenta")
     console.print()
 
     if not plans:
@@ -104,6 +105,8 @@ def _render(console: Console, plans: list[dict], selected: int, page: int, total
         "[bold]d[/bold] details   "
         "[bold]enter[/bold] open   "
         "[bold]n[/bold] new   "
+        "[bold]f[/bold] fork   "
+        "[bold]x[/bold] delete   "
         "[bold]q[/bold] quit[/dim]"
     )
     console.print()
@@ -173,7 +176,7 @@ def run_plans_page(console: Console) -> tuple[str, int | None]:
                 plan = db.get_plan(plans[selected]["id"])
                 _clear()
                 console.print()
-                console.rule(f"[bold cyan]{plan['title']}[/bold cyan]", style="cyan")
+                _header(console, plan["title"], "cyan")
                 console.print(f"  [dim]id: {plan['id']}   created: {plan['created_at'][:16]}[/dim]")
                 console.print()
                 if plan["content"].strip():
@@ -183,5 +186,29 @@ def run_plans_page(console: Console) -> tuple[str, int | None]:
                 console.print()
                 console.print("  [dim]Press any key to go back...[/dim]")
                 _getch()
+        elif key == "f":
+            if plans:
+                plan = plans[selected]
+                _clear()
+                new_title = questionary.text(
+                    f"Fork \"{plan['title']}\" — new name:",
+                    style=QUESTIONARY_STYLE,
+                ).ask()
+                if new_title and new_title.strip():
+                    new_id = db.fork_plan(plan["id"], new_title.strip())
+                    message = f"Forked as \"{new_title.strip()}\"."
+        elif key == "x":
+            if plans:
+                plan = plans[selected]
+                _clear()
+                confirmed = questionary.confirm(
+                    f"Delete \"{plan['title']}\"?",
+                    default=False,
+                    style=QUESTIONARY_STYLE,
+                ).ask()
+                if confirmed:
+                    db.delete_plan(plan["id"])
+                    selected = max(0, selected - 1)
+                    message = f"Deleted \"{plan['title']}\"."
         elif key in ("q", "\x03", "\x1b"):
             return "quit", None

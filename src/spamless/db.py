@@ -63,3 +63,17 @@ def save_plan(plan_id: int, content: str) -> None:
 def delete_plan(plan_id: int) -> None:
     with _connect() as conn:
         conn.execute("DELETE FROM plans WHERE id = ?", (plan_id,))
+
+
+def fork_plan(plan_id: int, new_title: str) -> int:
+    with _connect() as conn:
+        row = conn.execute(
+            "SELECT content FROM plans WHERE id = ?", (plan_id,)
+        ).fetchone()
+        if not row:
+            raise ValueError(f"Plan {plan_id} not found")
+        cur = conn.execute(
+            "INSERT INTO plans (title, content) VALUES (?, ?)",
+            (new_title, row["content"]),
+        )
+        return cur.lastrowid

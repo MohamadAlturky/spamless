@@ -3,6 +3,8 @@ import difflib
 from rich.console import Console
 from rich.syntax import Syntax
 
+from spamless.ui.banner import _header
+
 
 def show_diff(old: str, new: str, console: Console, label: str = "Proposed Changes") -> None:
     """Render a unified diff between old and new text using Rich."""
@@ -18,7 +20,7 @@ def show_diff(old: str, new: str, console: Console, label: str = "Proposed Chang
     diff_text = "".join(diff_lines)
     syntax = Syntax(diff_text, "diff", theme="monokai", word_wrap=True)
     console.print()
-    console.rule(f"[bold yellow]{label}[/bold yellow]", style="yellow")
+    _header(console, label, "yellow")
     console.print()
     console.print(syntax)
     console.print()

@@ -3,6 +3,7 @@ from rich.live import Live
 from rich.text import Text
 
 from spamless.api.openrouter import stream_completion_with_system
+from spamless.ui.banner import _header
 from spamless.ui.theme import SECONDARY_COLOR
 
 PLANNER_SYSTEM_PROMPT = """\
@@ -95,7 +96,7 @@ def stream_plan_response(
     answer_close = "</answer>"
 
     console.print()
-    console.rule("[bold cyan]Answer[/bold cyan]", style=SECONDARY_COLOR)
+    _header(console, "Answer", "cyan")
     console.print()
 
     with Live(Text(""), console=console, refresh_per_second=15) as live:

@@ -3,7 +3,6 @@ from typing import Iterator
 from rich.console import Console
 from rich.live import Live
 from rich.markdown import Markdown
-from rich.table import Table
 from rich.text import Text
 
 from spamless.ui.theme import (
@@ -29,26 +28,20 @@ _LOGO = r"""
 
 
 def show_plan(context: str, clarifications: str, filename: str, console: Console) -> None:
-    """Render context and clarifications side by side."""
+    """Render context and clarifications as stacked sections."""
     console.print()
 
-    ctx_content = Markdown(context) if context.strip() else Text("Nothing confirmed yet.", style="dim")
-    clar_content = Markdown(clarifications) if clarifications.strip() else Text("", style="dim")
-
-    grid = Table.grid(padding=(0, 3), expand=True)
-    grid.add_column(ratio=1)
-    grid.add_column(ratio=1)
-
-    # headers row
-    grid.add_row(
-        Text(f"▎ Context — {filename}", style="bold cyan"),
-        Text("▎ Clarifications", style="bold yellow") if clarifications.strip() else Text(""),
-    )
-    # content row
-    grid.add_row(ctx_content, clar_content)
-
-    console.print(grid)
+    _header(console, f"Context — {filename}", "cyan")
     console.print()
+    ctx_content = Markdown(context) if context.strip() else Text("  Nothing confirmed yet.", style="dim")
+    console.print(ctx_content)
+    console.print()
+
+    if clarifications.strip():
+        _header(console, "Clarifications", "yellow")
+        console.print()
+        console.print(Markdown(clarifications))
+        console.print()
 
 
 def show_full_state(
@@ -59,37 +52,29 @@ def show_full_state(
     filename: str,
     console: Console,
 ) -> None:
-    """After each turn: show question, answer, then context + clarifications side by side."""
-    qa_grid = Table.grid(padding=(0, 3), expand=True)
-    qa_grid.add_column(ratio=1)
-    qa_grid.add_column(ratio=1)
-    qa_grid.add_row(
-        Text("▎ Question", style="bold white"),
-        Text("▎ Answer", style="bold cyan"),
-    )
-    qa_grid.add_row(
-        Text(user_msg, style="white"),
-        Markdown(answer),
-    )
+    """After each turn: show question, answer, then context and clarifications as stacked sections."""
     console.print()
-    console.print(qa_grid)
+    _header(console, "Question", "white")
+    console.print()
+    console.print(Text(f"  {user_msg}", style="white"))
     console.print()
 
-    ctx_content = Markdown(context) if context.strip() else Text("Nothing confirmed yet.", style="dim")
-    clar_content = Markdown(clarifications) if clarifications.strip() else Text("", style="dim")
-
-    grid = Table.grid(padding=(0, 3), expand=True)
-    grid.add_column(ratio=1)
-    grid.add_column(ratio=1)
-
-    grid.add_row(
-        Text(f"▎ Context — {filename}", style="bold cyan"),
-        Text("▎ Clarifications", style="bold yellow") if clarifications.strip() else Text(""),
-    )
-    grid.add_row(ctx_content, clar_content)
-
-    console.print(grid)
+    _header(console, "Answer", "cyan")
     console.print()
+    console.print(Markdown(answer))
+    console.print()
+
+    _header(console, f"Context — {filename}", "cyan")
+    console.print()
+    ctx_content = Markdown(context) if context.strip() else Text("  Nothing confirmed yet.", style="dim")
+    console.print(ctx_content)
+    console.print()
+
+    if clarifications.strip():
+        _header(console, "Clarifications", "yellow")
+        console.print()
+        console.print(Markdown(clarifications))
+        console.print()
 
 
 def show_banner(console: Console) -> None:
