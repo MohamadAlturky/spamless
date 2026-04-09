@@ -16,13 +16,14 @@ def main() -> None:
         show_banner(console)
         db.init_db()
 
-        action, plan_id = run_plans_page(console)
+        while True:
+            action, plan_id = run_plans_page(console)
 
-        if action == "quit":
-            console.print("\n[bold magenta]  Goodbye from spamless.[/bold magenta]\n")
-            return
+            if action == "quit":
+                console.print("\n[bold magenta]  Goodbye from spamless.[/bold magenta]\n")
+                return
 
-        run_planner_session(console, plan_id)
+            run_planner_session(console, plan_id)
 
     except KeyboardInterrupt:
         console.print("\n\n[bold magenta]  Goodbye from spamless.[/bold magenta]\n")
